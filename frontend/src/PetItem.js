@@ -1,4 +1,3 @@
-// src/PetItem.js
 import React from 'react';
 
 function PetItem({ pet }) {
