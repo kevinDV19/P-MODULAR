@@ -1,11 +1,20 @@
 import React from 'react';
-import PetList from './PetList'; // Ajusta la ruta si es necesario
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import PetList from './PetList';
+import Login from './login';
+import Signup from './SignUp';
 
 function App() {
   return (
-    <div className="App">
-      <PetList />
-    </div>
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route path="/" element={<PetList />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/SignUp" element={<Signup />} />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 
