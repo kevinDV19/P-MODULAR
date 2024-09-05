@@ -1,0 +1,22 @@
+/* Estilos para el contenedor del buscador */
+.search-bar-container {
+    background-color: #ffffff; /* Fondo claro para que destaque */
+    border: 1px solid #f4efef; /* Borde sutil para encapsular */
+    border-radius: 25px; /* Bordes redondeados para un efecto moderno */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave para resaltar */
+  }
+  
+  .form-select, .btn {
+    min-width: 100px; /* Ancho mínimo para los selectores y botones */
+    height: 40px; /* Asegura la misma altura para todos los elementos */
+    margin-bottom: 10px; /* Espacio inferior para elementos en pantallas pequeñas */
+    border-radius: 25px;
+    box-shadow: 0 4px 8px rgba(60, 57, 57, 0.1); /* Sombra suave para resaltar */
+  }
+  
+  @media (min-width: 768px) {
+    /* Estilos para pantallas medianas y más grandes */
+    .form-select, .btn {
+      margin-bottom: 0; /* Remueve el margen inferior en pantallas más grandes */
+    }
+  }
