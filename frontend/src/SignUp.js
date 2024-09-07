@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const SignUp = () => {
   const [username, setUsername] = useState('');
@@ -13,7 +14,7 @@ const SignUp = () => {
   const handleSignup = async (event) => {
     event.preventDefault();
     if (password !== confirmPassword) {
-      setError("Passwords don't match");
+      setError("Las contraseñas no coinciden");
       return;
     }
 
@@ -30,42 +31,78 @@ const SignUp = () => {
 
       if (response.ok) {
         setSuccess(result.success);
-        // Redirigir al usuario a la página de login después de un registro exitoso
         setTimeout(() => {
           navigate('/login');
-        }, 2000); // Espera 2 segundos para mostrar el mensaje de éxito
+        }, 2000);
       } else {
-        setError(result.error || 'Signup failed');
+        setError(result.error || 'Registro fallido');
       }
     } catch (error) {
-      setError('An unexpected error occurred');
+      setError('Ocurrió un error inesperado');
     }
   };
 
   return (
-    <div>
-      <h2>Sign Up</h2>
-      <form onSubmit={handleSignup}>
-        <label>
-          Username:
-          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required />
-        </label>
-        <label>
-          Email:
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        </label>
-        <label>
-          Password:
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        </label>
-        <label>
-          Confirm Password:
-          <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
-        </label>
-        <button type="submit">Sign Up</button>
-      </form>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {success && <p style={{ color: 'green' }}>{success}</p>}
+    <div className="d-flex justify-content-center align-items-center min-vh-100">
+      <div className="card border-light shadow p-4" style={{maxWidth: '366px', width: '100%'}}>
+        <div className="card-body">
+          <h2 className="text-center mb-4">Sign Up</h2>
+          <form onSubmit={handleSignup}>
+            <div className="mb-3">
+              <label htmlFor="username" className="form-label">Username</label>
+              <input
+                type="text"
+                className="form-control"
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="email" className="form-label">Email</label>
+              <input
+                type="email"
+                className="form-control"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="password" className="form-label">Password</label>
+              <input
+                type="password"
+                className="form-control"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
+              <input
+                type="password"
+                className="form-control"
+                id="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+            {error && <div className="alert alert-danger">{error}</div>}
+            {success && <div className="alert alert-success">{success}</div>}
+            <div className="d-grid gap-2">
+              <button type="submit" className="btn btn-primary">Sign Up</button>
+            </div>
+          </form>
+          <div className="text-center mt-3">
+            <p>¿Ya tienes una cuenta? <Link to="/login">Inicia sesión aquí</Link></p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
