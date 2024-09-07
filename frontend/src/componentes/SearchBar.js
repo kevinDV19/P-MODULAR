@@ -1,36 +1,62 @@
-import PetList from './PetList'
 import './SearchBar.css'; 
 import {Alert} from 'react-bootstrap';
-import React, {useState} from 'react';
+import React, {useState}from 'react';
+import { useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 
 function SearchBar({ setPets }) {
+  const location = useLocation(); 
+  const searchParams = new URLSearchParams(location.search); 
+
+  const tipoInicial = searchParams.get('tipo') || '';
+
   const [filters, setFilters] = useState({
-    tipo: '',
+    tipo: tipoInicial,
     size: '',
     sexo: '',
     ubicacion: '',
     edad: '',
   });
 
-  const [activeFilters, setActiveFilters] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [showAll, setShowAll] = useState(true); // Para mostrar toda la lista cuando no hay filtros
-  const [noResults, setNoResults] = useState(false); // Para manejar si no hay resultados
+  const [noResults, setNoResults] = useState(false); 
+  const [activeFilters, setActiveFilters] = useState(false);
+
+  useEffect(() => {
+    if (filters.tipo) {
+      handleSearch();
+    }
+  }, [filters.tipo]);
+
+  useEffect(() => {
+    if (activeFilters) {
+      handleSearch();
+      setActiveFilters(false);
+    }
+  }, [filters]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
+    if (name !== 'tipo') {
+      setFilters({
+        ...filters,
+        [name]: value,
+      });
+    }
+  };
+
+  const handleClearFilters = () => {
     setFilters({
-      ...filters,
-      [name]: value,
-    });
+      ...filters, 
+      size: '',
+      sexo: '',
+      ubicacion: '',
+      edad: '',
+    }); 
     setActiveFilters(true);
   };
 
   const handleSearch = () => {
-    setLoading(true);
-    setShowAll(false);
-
     const fetchPets = async () => {
       try {
         const queryParams = new URLSearchParams(filters).toString();
@@ -41,38 +67,24 @@ function SearchBar({ setPets }) {
         const data = await response.json();
 
         if (data.length === 0) {
-          setNoResults(true); // Si no hay resultados, activamos noResults
+          setNoResults(true); 
         } else {
-          setNoResults(false); // Si hay resultados, desactivamos noResults
+          setNoResults(false); 
         }
 
-        setPets(data); // Actualiza el estado en el componente PetList
+        setPets(data); 
       } catch (error) {
         setError(error.message);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchPets();
   };
 
-  const handleClearFilters = () => {
-    window.location.reload();
-  };
-
   return (
     <div className="container my-4">
       <div className="search-bar-container p-3">
         <form className="row g-2 align-items-center justify-content-center" onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
-          <div className="col-12 col-md-auto">
-            <select name="tipo" className="form-select" value={filters.tipo} onChange={handleFilterChange}>
-              <option value="">Tipo</option>
-              <option value="perro">Perro</option>
-              <option value="gato">Gato</option>
-            </select>
-          </div>
-
           <div className="col-12 col-md-auto">
             <select name="size" className="form-select" value={filters.size} onChange={handleFilterChange}>
               <option value="">Tamaño</option>
@@ -121,16 +133,19 @@ function SearchBar({ setPets }) {
         </form>
       </div>
 
-      {/* Mostrar alerta si no hay resultados */}
       {noResults && (
-        <Alert variant="warning" className="text-center">
+        <Alert variant="warning" className="text-center mt-4">
           <h4>No se encontraron mascotas con los filtros seleccionados</h4>
           <p>Intenta modificar los filtros o presiona el botón de "Borrar filtros" para ver todas las mascotas disponibles.</p>
         </Alert>
       )}
 
-      {showAll ? <PetList pets={[]} /> : null}
-      {error && <p>{error}</p>}
+      {error && (
+        <div className="alert alert-danger text-center">
+          <p>{error}</p>
+        </div>
+      )}
+
     </div>
   );
 }
