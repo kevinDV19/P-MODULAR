@@ -1,17 +1,14 @@
 from django.http import JsonResponse
-from .models import Pet
-from rest_framework import status
+from . import models
+from rest_framework import status, generics
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth.models import User
 from google.auth.transport import requests
 from google.oauth2 import id_token
-
-def list_pets(request):
-    pets = list(Pet.objects.values())
-    return JsonResponse(pets, safe=False)
+from . import serializers
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -41,7 +38,12 @@ def google_login(request):
         return Response({"error": "Token is required"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        idinfo = id_token.verify_oauth2_token(token, requests.Request(), '101162202522-5sijoh7hg8jpco4ndup6a2bifsm9r9to.apps.googleusercontent.com')
+        idinfo = id_token.verify_oauth2_token(
+            token, 
+            requests.Request(), 
+            '101162202522-uoj3u5jcdsp6lhj7a9kr15e4jcvqmebf.apps.googleusercontent.com', 
+            clock_skew_in_seconds = 10
+        )
 
         email = idinfo.get('email')
         name = idinfo.get('name')
@@ -61,7 +63,6 @@ def google_login(request):
 
     except ValueError as e:
         return Response({"error": f"Invalid token: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
-    
     
 def search_pets(request):
     tipo = request.GET.get('tipo', '')
@@ -83,9 +84,71 @@ def search_pets(request):
         filters['edad'] = edad
 
     try:
-        pets = Pet.objects.filter(**filters)
-        pets_data = list(pets.values())  # Convertir QuerySet a lista de diccionarios
+        pets = models.Pet.objects.filter(**filters)
+        pets_data = list(pets.values())  
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return JsonResponse(pets_data, safe=False)
+
+def pet_detail(request, id):
+    try:
+        pet =models.Pet.objects.get(pk=id)
+        return JsonResponse({
+            'id': pet.id,             
+            'nombre': pet.nombre, 
+            'descripcion': pet.descripcion, 
+            'imagen': pet.imagen, 
+            'size': pet.size, 
+            'sexo': pet.sexo, 
+            'ubicacion': pet.ubicacion,
+            'edad': pet.edad,
+        })
+    except models.Pet.DoesNotExist:
+        return JsonResponse({'error': 'Pet not found'}, status=404)
+
+# Vista para listar y crear solicitudes de adopción
+class AdoptionRequestListCreate(generics.ListCreateAPIView):
+    queryset = models.AdoptionRequest.objects.all()
+    serializer_class = serializers.AdoptionRequestSerializer
+    permission_classes = [IsAuthenticated]  # Solo usuarios autenticados pueden acceder
+
+    def perform_create(self, serializer):
+        pet = serializer.validated_data['pet']
+        pet_owner = pet.owner  # Asumiendo que tienes un campo 'owner' en el modelo Pet
+        serializer.save(user=self.request.user, pet_owner=pet_owner)
+
+# Vista para manejar solicitudes individuales (detalles, actualización, eliminación)
+class AdoptionRequestDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.AdoptionRequest.objects.all()
+    serializer_class = serializers.AdoptionRequestSerializer
+    permission_classes = [IsAuthenticated]
+
+    def update(self, request, *args, **kwargs):
+        partial = request.method == 'PATCH'
+        instance = self.get_object()
+        
+        if request.data.get('action') == 'aceptar':
+            instance.status = models.AdoptionRequest.APROBADA
+        elif request.data.get('action') == 'rechazar':
+            instance.status = models.AdoptionRequest.RECHAZADA
+        
+        instance.save()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+class NotificationList(generics.ListAPIView):
+    serializer_class = serializers.NotificationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return models.Notification.objects.filter(user=self.request.user)
+
+class NotificationMarkAsRead(generics.UpdateAPIView):
+    queryset = models.Notification.objects.all()
+    serializer_class = serializers.NotificationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_update(self, serializer):
+        notification = serializer.save(is_read=True)
+

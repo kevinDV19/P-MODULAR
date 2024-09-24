@@ -1,9 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Login from './login';
-import Signup from './SignUp';
-import Main from './Main';
-import SearchPetPage from './SearchPetPage';
+import Login from './LoginPage';
+import Signup from './RegisterPage';
+import Main from './MainPage';
+import PetSearch from './PetSearchPage';
+import PetDetails from './PetDetailsPage';
 
 function App() {
   return (
@@ -13,7 +14,8 @@ function App() {
           <Route path="/" element={<Main />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Signup />} />
-          <Route path="/Search" element={<SearchPetPage />} />
+          <Route path="/Search" element={<PetSearch />} />
+          <Route path="/pets/:id" element={<PetDetails />} />
         </Routes>
       </div>
     </Router>

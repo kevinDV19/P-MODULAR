@@ -1,48 +1,96 @@
 import './SearchBar.css'; 
-import {Alert} from 'react-bootstrap';
-import React, {useState}from 'react';
-import { useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { Alert } from 'react-bootstrap';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import LoadingSpinner from './LoadingSpinner';
 
 function SearchBar({ setPets }) {
   const location = useLocation(); 
+  const navigate = useNavigate(); 
   const searchParams = new URLSearchParams(location.search); 
-
   const tipoInicial = searchParams.get('tipo') || '';
 
   const [filters, setFilters] = useState({
     tipo: tipoInicial,
-    size: '',
-    sexo: '',
-    ubicacion: '',
-    edad: '',
+    size: searchParams.get('size') || '',
+    sexo: searchParams.get('sexo') || '',
+    ubicacion: searchParams.get('ubicacion') || '',
+    edad: searchParams.get('edad') || '',
   });
 
   const [error, setError] = useState(null);
   const [noResults, setNoResults] = useState(false); 
+  const [loading, setLoading] = useState(false); 
   const [activeFilters, setActiveFilters] = useState(false);
+
+  const handleSearch = useCallback(() => {
+    const fetchPets = async () => {
+      setLoading(true);
+      
+      try {
+        const queryParams = new URLSearchParams(filters).toString();
+        const cachedResults = sessionStorage.getItem(queryParams);
+  
+        if (cachedResults) {
+          const parsedResults = JSON.parse(cachedResults);
+          setPets(parsedResults);
+  
+          if (parsedResults.length === 0) {
+            setNoResults(true);
+          } else {
+            setNoResults(false);
+          }
+        } else {
+          const response = await fetch('http://localhost:8000/api/search/?' + queryParams);
+          if (!response.ok) {
+            throw new Error('Error al cargar las mascotas.');
+          }
+          const data = await response.json();
+  
+          if (data.length === 0) {
+            setNoResults(true); 
+          } else {
+            setNoResults(false); 
+          }
+  
+          setPets(data);
+          sessionStorage.setItem(queryParams, JSON.stringify(data)); 
+        }
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchPets();
+  }, [filters, setPets]);
+  
 
   useEffect(() => {
     if (filters.tipo) {
       handleSearch();
     }
-  }, [filters.tipo]);
+  }, [filters.tipo]); 
+
+  useEffect(() => {
+      const queryParams = new URLSearchParams(filters).toString();
+      navigate(`?${queryParams}`);
+  }, [filters, navigate]);
 
   useEffect(() => {
     if (activeFilters) {
       handleSearch();
       setActiveFilters(false);
     }
-  }, [filters]);
+  }, [activeFilters]); 
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    if (name !== 'tipo') {
-      setFilters({
-        ...filters,
-        [name]: value,
-      });
-    }
+    setFilters({
+      ...filters,
+      [name]: value,
+    });
   };
 
   const handleClearFilters = () => {
@@ -56,30 +104,6 @@ function SearchBar({ setPets }) {
     setActiveFilters(true);
   };
 
-  const handleSearch = () => {
-    const fetchPets = async () => {
-      try {
-        const queryParams = new URLSearchParams(filters).toString();
-        const response = await fetch('http://localhost:8000/api/search/?' + queryParams);
-        if (!response.ok) {
-          throw new Error('Error al cargar las mascotas.');
-        }
-        const data = await response.json();
-
-        if (data.length === 0) {
-          setNoResults(true); 
-        } else {
-          setNoResults(false); 
-        }
-
-        setPets(data); 
-      } catch (error) {
-        setError(error.message);
-      }
-    };
-
-    fetchPets();
-  };
 
   return (
     <div className="container my-4">
@@ -133,14 +157,16 @@ function SearchBar({ setPets }) {
         </form>
       </div>
 
-      {noResults && (
+      {loading && <LoadingSpinner />}
+
+      {noResults && !loading && (
         <Alert variant="warning" className="text-center mt-4">
           <h4>No se encontraron mascotas con los filtros seleccionados</h4>
           <p>Intenta modificar los filtros o presiona el botón de "Borrar filtros" para ver todas las mascotas disponibles.</p>
         </Alert>
       )}
 
-      {error && (
+      {error && !loading && (
         <div className="alert alert-danger text-center">
           <p>{error}</p>
         </div>
@@ -151,4 +177,3 @@ function SearchBar({ setPets }) {
 }
 
 export default SearchBar;
-  
