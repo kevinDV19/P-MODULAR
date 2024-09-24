@@ -1,4 +1,5 @@
-import { Card, Button} from 'react-bootstrap';
+import { Card } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 
 function PetList({ pets }) {
   return (
@@ -12,7 +13,9 @@ function PetList({ pets }) {
                 <Card.Title>{pet.nombre}</Card.Title>
                 <Card.Text>{pet.edad} ● {pet.sexo}</Card.Text>
                 <Card.Text>{pet.ubicacion}</Card.Text>
-                <Button variant="primary">View Details</Button>
+                <Link to={`/pets/${pet.id}`} className="btn btn-primary">
+                  Ver detalles
+                </Link>
               </Card.Body>
             </Card>
           </div>

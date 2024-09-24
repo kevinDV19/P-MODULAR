@@ -1,43 +1,78 @@
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Navbar, Nav, NavDropdown, Button } from 'react-bootstrap';
+import { FaUser, FaSignOutAlt } from 'react-icons/fa';
 
 function Header() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [username, setUsername] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+    const storedUsername = localStorage.getItem('username');
+    
+    if (isAuthenticated && storedUsername) {
+      setIsAuthenticated(true);
+      setUsername(storedUsername);
+    } else {
+      setIsAuthenticated(false);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('username');
+    localStorage.setItem('isAuthenticated', 'false');
+    navigate('/'); 
+  };
+
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-transparent shadow">
+    <Navbar expand="lg" className="bg-transparent shadow">
       <div className="container">
         <Link className="navbar-brand" to="/" style={{ fontSize: '2rem', fontWeight: 'bold' }}>
-          Adógtame
+          <img
+            src="/logo-header.png"
+            alt="logo"
+            className="img-fluid"
+            style={{ maxWidth: '200px', height: 'auto' }}
+          />
         </Link>
-        <button 
-          className="navbar-toggler" 
-          type="button" 
-          data-bs-toggle="collapse" 
-          data-bs-target="#navbarNav" 
-          aria-controls="navbarNav" 
-          aria-expanded="false" 
-          aria-label="Toggle navigation"
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
-        <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav ms-auto">
-            <li className="nav-item">
-              <Link className="nav-link" to="/login">
-                <button className="btn btn-outline-primary">
-                  Login
-                </button>
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/signup">
-                <button className="btn btn-primary">
-                  Sign Up
-                </button>
-              </Link>
-            </li>
-          </ul>
-        </div>
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Collapse id="basic-navbar-nav">
+          <Nav className="ms-auto">
+            {isAuthenticated ? (
+              <NavDropdown
+                title={<span style={{ fontSize: '1.15rem', fontWeight: 'bold' }}>Hola, {username}</span>}
+                id="basic-nav-dropdown"
+                align="end"
+              >
+                <NavDropdown.Item as={Link} to="/profile" className="d-flex align-items-center">
+                  <FaUser className="me-2" /> Mi Perfil
+                </NavDropdown.Item>
+                <NavDropdown.Item onClick={handleLogout} className="d-flex align-items-center">
+                  <FaSignOutAlt className="me-2" /> Salir
+                </NavDropdown.Item>
+              </NavDropdown>
+            ) : (
+              <>
+                <Nav.Item>
+                  <Link className="nav-link" to="/login">
+                    <Button variant="outline-primary">Login</Button>
+                  </Link>
+                </Nav.Item>
+                <Nav.Item>
+                  <Link className="nav-link" to="/register">
+                    <Button variant="primary">Sign Up</Button>
+                  </Link>
+                </Nav.Item>
+              </>
+            )}
+          </Nav>
+        </Navbar.Collapse>
       </div>
-    </nav>
+    </Navbar>
   );
 }
 
