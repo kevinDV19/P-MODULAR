@@ -1,20 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate} from 'react-router-dom';
+import { useLocation } from 'react-router-dom'; 
 import { Navbar, Nav, NavDropdown, Button } from 'react-bootstrap';
 import { FaUser, FaSignOutAlt } from 'react-icons/fa';
 
 function Header() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
+  const [first_name, setFirstname] = useState('');
   const navigate = useNavigate();
+  const location = useLocation(); 
 
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+    const isAuthenticated = localStorage.getItem('accessToken');
     const storedUsername = localStorage.getItem('username');
+    const storedFirstname = localStorage.getItem('first_name');
     
     if (isAuthenticated && storedUsername) {
       setIsAuthenticated(true);
       setUsername(storedUsername);
+      setFirstname(storedFirstname);
     } else {
       setIsAuthenticated(false);
     }
@@ -25,7 +30,12 @@ function Header() {
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('username');
     localStorage.setItem('isAuthenticated', 'false');
-    navigate('/'); 
+  
+    if (location.pathname === '/') {
+      window.location.reload(); 
+    } else {
+      navigate('/');
+    }
   };
 
   return (
@@ -39,12 +49,13 @@ function Header() {
             style={{ maxWidth: '200px', height: 'auto' }}
           />
         </Link>
+        <li><Link to="/my-adoption-requests">Mis Solicitudes de Adopción</Link></li>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto">
             {isAuthenticated ? (
               <NavDropdown
-                title={<span style={{ fontSize: '1.15rem', fontWeight: 'bold' }}>Hola, {username}</span>}
+                title={<span style={{ fontSize: '1.15rem', fontWeight: 'bold' }}>Hola, {first_name}</span>}
                 id="basic-nav-dropdown"
                 align="end"
               >
