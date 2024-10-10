@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-function SignUp(){
+function SignUp() {
   const [username, setUsername] = useState('');
+  const [first_name, setFirstname] = useState('');
+  const [last_name, setLastname] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -13,6 +15,7 @@ function SignUp(){
 
   const handleSignup = async (event) => {
     event.preventDefault();
+
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden");
       return;
@@ -24,7 +27,7 @@ function SignUp(){
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({ username, first_name, last_name, email, password }),
       });
 
       const result = await response.json();
@@ -35,21 +38,32 @@ function SignUp(){
           navigate('/login');
         }, 2000);
       } else {
-        setError(result.error || 'Registro fallido');
+        setError(result.error);
       }
     } catch (error) {
       setError('Ocurrió un error inesperado');
     }
   };
 
+  useEffect(() => {
+    if (error || success) {
+      const timer = setTimeout(() => {
+        setError(null);
+        setSuccess(null);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [error, success]);
+
   return (
     <div className="d-flex justify-content-center align-items-center min-vh-100">
       <div className="card border-light shadow p-4" style={{maxWidth: '366px', width: '100%'}}>
         <div className="card-body">
-          <h2 className="text-center mb-4">Sign Up</h2>
+          <p className="text-center mb-4 fs-2 fw-bold">Registro</p>
           <form onSubmit={handleSignup}>
             <div className="mb-3">
-              <label htmlFor="username" className="form-label">Username</label>
+              <label htmlFor="username" className="form-label">Usuario</label>
               <input
                 type="text"
                 className="form-control"
@@ -60,7 +74,29 @@ function SignUp(){
               />
             </div>
             <div className="mb-3">
-              <label htmlFor="email" className="form-label">Email</label>
+              <label htmlFor="first_name" className="form-label">Nombre(s)</label>
+              <input
+                type="text"
+                className="form-control"
+                id="first_name"
+                value={first_name}
+                onChange={(e) => setFirstname(e.target.value)}
+                required
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="last_name" className="form-label">Apellidos</label>
+              <input
+                type="text"
+                className="form-control"
+                id="last_name"
+                value={last_name}
+                onChange={(e) => setLastname(e.target.value)}
+                required
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="email" className="form-label">Correo</label>
               <input
                 type="email"
                 className="form-control"
@@ -71,7 +107,7 @@ function SignUp(){
               />
             </div>
             <div className="mb-3">
-              <label htmlFor="password" className="form-label">Password</label>
+              <label htmlFor="password" className="form-label">Contraseña</label>
               <input
                 type="password"
                 className="form-control"
@@ -82,7 +118,7 @@ function SignUp(){
               />
             </div>
             <div className="mb-3">
-              <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
+              <label htmlFor="confirmPassword" className="form-label">Confirmar Contraseña</label>
               <input
                 type="password"
                 className="form-control"
@@ -95,7 +131,7 @@ function SignUp(){
             {error && <div className="alert alert-danger">{error}</div>}
             {success && <div className="alert alert-success">{success}</div>}
             <div className="d-grid gap-2">
-              <button type="submit" className="btn btn-primary">Sign Up</button>
+              <button type="submit" className="btn btn-primary">Registrarse</button>
             </div>
           </form>
           <div className="text-center mt-3">

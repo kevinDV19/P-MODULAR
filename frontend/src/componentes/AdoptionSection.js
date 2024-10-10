@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 function AdoptionSection() {
   return (
     <section className="container my-5">
-      <h2 className="text-center mb-4">¿Quieres adoptar una mascota?</h2>
+      <p className="text-center mb-4 fs-2 fw-bold">¿Quieres adoptar una mascota?</p>
       <div className="row justify-content-center">
         <div className="col-md-4 mb-4">
           <Link to="/search?tipo=Perro" className="d-block text-decoration-none">

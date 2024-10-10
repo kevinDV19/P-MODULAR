@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Link } from 'react-router-dom';
@@ -27,7 +27,21 @@ function Login() {
         localStorage.setItem('accessToken', data.access);
         localStorage.setItem('refreshToken', data.refresh);
         localStorage.setItem('username', username);
-        localStorage.setItem('isAuthenticated', 'true');
+
+        const profileResponse = await fetch('http://localhost:8000/api/user/profile/', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${data.access}`,
+          },
+        });
+  
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          localStorage.setItem('first_name', profileData.nombre);
+        } else {
+          console.error('Error al obtener el perfil del usuario');
+        }
     
         const redirectTo = sessionStorage.getItem('redirectAfterLogin');
 
@@ -45,7 +59,6 @@ function Login() {
     }
   };
   
-
   const handleGoogleSuccess = async (response) => {
     const token = response.credential; 
     try {
@@ -60,8 +73,10 @@ function Login() {
       if (res.ok) {
         const data = await res.json();
 
+        localStorage.setItem('accessToken', data.access);  
+        localStorage.setItem('refreshToken', data.refresh);
         localStorage.setItem('username', data.username);
-        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('first_name', data.first_name);
 
         const redirectTo = sessionStorage.getItem('redirectAfterLogin');
 
@@ -82,6 +97,16 @@ function Login() {
   const handleGoogleFailure = (error) => {
     console.error('Google Sign-in Error:', error);
   };
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 3000); 
+
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   return (
     <div className="d-flex justify-content-center align-items-center min-vh-100">
@@ -116,8 +141,6 @@ function Login() {
               <button type="submit" className="btn btn-primary">Login</button>
             </div>
           </form>
-
-          {/* Botón de Google Login */}
           <div className="text-center mt-3">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
@@ -126,7 +149,7 @@ function Login() {
           </div>
 
           <div className="text-center mt-3">
-            <p>¿Eres nuevo? <Link to="/SignUp">Regístrate aquí</Link></p>
+            <p>¿Eres nuevo? <Link to="/register">Regístrate aquí</Link></p>
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Carousel, Button, Container, Row, Col } from 'react-bootstrap';
 import LoadingSpinner from './LoadingSpinner';
 
@@ -42,15 +42,13 @@ function PetDetails() {
       setLoading(false);
     }
 
-    // Comprobar si el usuario está autenticado
-    const auth = localStorage.getItem('isAuthenticated') === 'true';
+    const auth = localStorage.getItem('accessToken');
     if (auth) {
       setIsAuthenticated(true);
     }
   }, [id]);
 
   const handleLoginRedirect = () => {
-    // Guardar la URL actual antes de redirigir al login
     sessionStorage.setItem('redirectAfterLogin', `/pets/${id}`);
     navigate('/login');
   };
@@ -72,6 +70,9 @@ function PetDetails() {
       <Row>
         <Col md={6}>
           <Carousel>
+            <Carousel.Item>
+              <img className="d-block w-100" src={pet.imagen} alt={pet.nombre} style={{borderRadius: '40px'}}/>
+            </Carousel.Item>
             <Carousel.Item>
               <img className="d-block w-100" src={pet.imagen} alt={pet.nombre} style={{borderRadius: '40px'}}/>
             </Carousel.Item>
@@ -107,14 +108,15 @@ function PetDetails() {
                 <p>{pet.descripcion}</p>
               </div>
             </div>
-
             <div className="mt-4">
               <h5>¿Te gustaría adoptar a {pet.nombre}?</h5>
-              {isAuthenticated ? (
-                <Button variant="primary" className="w-30 py-1 mt-3">Solicitar adopción</Button>
-              ) : (
-                <Button variant="primary" className="w-30 py-1 mt-3" onClick={handleLoginRedirect}>Inicia sesión aquí</Button>
-              )}
+                {isAuthenticated ? (
+                  <Link to={`/adoption/${pet.id}`} className="btn btn-success">
+                    Solicitar Adopción
+                  </Link>
+                ) : (
+                  <Button variant="primary" className="w-30 py-1 mt-3" onClick={handleLoginRedirect}>Inicia sesión aquí</Button>
+                )}
             </div>
           </div>
         </Col>
