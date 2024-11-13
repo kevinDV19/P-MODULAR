@@ -1,4 +1,7 @@
 from django.contrib import admin
-from .models import Pet
+from . import models
 
-admin.site.register(Pet)
+admin.site.register(models.Pet)
+admin.site.register(models.AdoptionRequest)
+admin.site.register(models.Notification)
+

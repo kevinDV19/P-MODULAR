@@ -6,7 +6,7 @@ function AdoptionSection() {
       <p className="text-center mb-4 fs-2 fw-bold">¿Quieres adoptar una mascota?</p>
       <div className="row justify-content-center">
         <div className="col-md-4 mb-4">
-          <Link to="/search?tipo=Perro" className="d-block text-decoration-none">
+          <Link to="/pet/search?tipo=Perro" className="d-block text-decoration-none">
             <div className="card border-light shadow" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <img
                 src="/perros.png"
@@ -20,7 +20,7 @@ function AdoptionSection() {
           </Link>
         </div>
         <div className="col-md-4 mb-4">
-          <Link to="/search?tipo=gato" className="d-block text-decoration-none">
+          <Link to="/pet/search?tipo=gato" className="d-block text-decoration-none">
             <div className="card border-light shadow" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <img
                 src="/gatos.png"
@@ -34,7 +34,7 @@ function AdoptionSection() {
           </Link>
         </div>
         <div className="col-md-4 mb-4">
-          <Link to="/search?tipo=otros" className="d-block text-decoration-none">
+          <Link to="/pet/search?tipo=otros" className="d-block text-decoration-none">
             <div className="card border-light shadow" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <img
                 src="/otros.png"

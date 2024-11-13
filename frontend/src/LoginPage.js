@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google'; 
+import { useAuth } from './componentes/authContext';
 
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { fetchWithAuth, login } = useAuth();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -28,17 +30,18 @@ function Login() {
         localStorage.setItem('refreshToken', data.refresh);
         localStorage.setItem('username', username);
 
-        const profileResponse = await fetch('http://localhost:8000/api/user/profile/', {
+        const profileResponse = await fetchWithAuth('http://localhost:8000/api/user/profile/', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${data.access}`,
           },
         });
   
         if (profileResponse.ok) {
           const profileData = await profileResponse.json();
           localStorage.setItem('first_name', profileData.nombre);
+          localStorage.setItem('user_id', profileData.user);
+          login(profileData.nombre);
         } else {
           console.error('Error al obtener el perfil del usuario');
         }
@@ -77,6 +80,8 @@ function Login() {
         localStorage.setItem('refreshToken', data.refresh);
         localStorage.setItem('username', data.username);
         localStorage.setItem('first_name', data.first_name);
+        localStorage.setItem('user_id', data.user_id);
+        login(data.first_name);
 
         const redirectTo = sessionStorage.getItem('redirectAfterLogin');
 

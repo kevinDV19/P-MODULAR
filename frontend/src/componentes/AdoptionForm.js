@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { useAuth } from './authContext';
+
 
 function AdoptionForm() {
-  const { id } = useParams();
+  const { id, requestId } = useParams();
   const [message, setMessage] = useState('');
   const [pet, setPet] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const { fetchWithAuth } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     nombre: '',
     apellidos: '',
@@ -28,115 +32,106 @@ function AdoptionForm() {
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      try {
-        const token = localStorage.getItem('accessToken');
-        const response = await fetch('http://localhost:8000/api/user/profile/', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-  
-        if (response.ok) {
-          const profileData = await response.json();
-          setFormData({
-            nombre: profileData.nombre || '',
-            apellidos: profileData.apellidos || '',
-            correo: profileData.correo || '',
-            ocupacion: profileData.ocupacion || '',
-            colonia: profileData.colonia || '',
-            codigo_postal: profileData.codigo_postal || '',
-            municipio: profileData.municipio || '',
-            telefono_celular: profileData.telefono_celular || '',
-            experienciaMascotas: '',
-            otrasMascotas: '',
-            espacioAdecuado: '',
-            responsableCuidado: '',
-            horasSolas: '',
-            experienciaEspecifica: '',
-            dispuestoGastos: ''
+      if (!requestId) {
+        try {
+          const response = await fetchWithAuth('http://localhost:8000/api/user/profile/', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
           });
-        } else {
-          console.error('Error al obtener el perfil del usuario');
+
+          if (response.ok) {
+            const profileData = await response.json();
+            setFormData((prevData) => ({
+              ...prevData,
+              nombre: profileData.nombre || '',
+              apellidos: profileData.apellidos || '',
+              correo: profileData.correo || '',
+              ocupacion: profileData.ocupacion || '',
+              colonia: profileData.colonia || '',
+              codigo_postal: profileData.codigo_postal || '',
+              municipio: profileData.municipio || '',
+              telefono_celular: profileData.telefono_celular || '',
+            }));
+          } else {
+            console.error('Error al obtener el perfil del usuario');
+          }
+        } catch (error) {
+          console.error('Error al obtener los datos del perfil del usuario:', error);
         }
-      } catch (error) {
-        console.error('Error al obtener los datos del perfil del usuario:', error);
       }
     };
-  
+
     fetchUserProfile();
-  }, []);
+  }, [fetchWithAuth, requestId]);
 
   useEffect(() => {
     const fetchPetDetails = async () => {
       try {
         const cachedPet = sessionStorage.getItem(`pet_${id}`);
-        
         if (cachedPet) {
           setPet(JSON.parse(cachedPet));
         } else {
-          const response = await fetch(`http://localhost:8000/api/pets/${id}`);
-          if (!response.ok) {
-            throw new Error('Error al cargar los detalles de la mascota.');
-          }
+          const response = await fetchWithAuth(`http://localhost:8000/api/pet/${id}`);
+          if (!response.ok) throw new Error('Error al cargar los detalles de la mascota.');
           const data = await response.json();
-          if (data) {
-            setPet(data);
-            sessionStorage.setItem(`pet_${id}`, JSON.stringify(data));
-          }
+          setPet(data);
+          sessionStorage.setItem(`pet_${id}`, JSON.stringify(data));
         }
       } catch (error) {
         console.error('Error al cargar los detalles de la mascota:', error);
       }
     };
-  fetchPetDetails();
-  }, [id]);
-
-  const createAdoptionRequest = async () => {
-    const token = localStorage.getItem('accessToken');
-    setError(null); 
-    setSuccess(null); 
-
-    try {
-      const response = await fetch('http://localhost:8000/api/adoption-request/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          pet: id,  
-          message: message,
-          ...formData, 
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Detalles del error:', errorData);
-        throw new Error(errorData.detail || 'Error al enviar la solicitud de adopción');
-      }
-
-      const data = await response.json();
-      console.log('Solicitud creada exitosamente', data);
-      setSuccess('¡Solicitud enviada exitosamente!');
-    } catch (error) {
-      console.error('Error al crear la solicitud:', error.message);
-      setError(error.message); 
-    }
-  };
+    fetchPetDetails();
+  }, [id, fetchWithAuth]);
 
   useEffect(() => {
-    if (error || success) {
-      const timer = setTimeout(() => {
-        setError(null);
-        setSuccess(null);
-      }, 5000);
+    const fetchAdoptionRequest = async () => {
+      if (requestId) {
+        try {
+          const response = await fetchWithAuth(`http://localhost:8000/api/adoption-request/${requestId}/`);
+          if (response.ok) {
+            const requestData = await response.json();
+            setFormData(requestData.form_data);
+            setMessage(requestData.message || '');
+          }
+        } catch (error) {
+          console.error('Error al cargar la solicitud:', error);
+        }
+      }
+    };
 
-      return () => clearTimeout(timer);
+    fetchAdoptionRequest();
+  }, [requestId, fetchWithAuth]);
+
+const saveAdoptionRequest = async () => {
+  const isEdit = !!requestId; 
+  const url = isEdit 
+    ? `http://localhost:8000/api/adoption-request/${requestId}/` 
+    : 'http://localhost:8000/api/adoption-request/';
+  const method = isEdit ? 'PATCH' : 'POST';
+
+  const bodyData = isEdit 
+    ? { form_data: { ...formData }, message: message }
+    : { pet: id, message: message, form_data: { ...formData } };
+
+  try {
+    const response = await fetchWithAuth(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bodyData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Error al enviar la solicitud de adopción');
     }
-  }, [error, success]);
+
+    setSuccess(isEdit ? '¡Solicitud actualizada exitosamente!' : '¡Solicitud enviada exitosamente!');
+  } catch (error) {
+    setError(error.message);
+    console.error('Error al guardar la solicitud:', error.message);
+  }
+};
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -148,30 +143,22 @@ function AdoptionForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    try {
-      const token = localStorage.getItem('accessToken');
-      
-      const { nombre, apellidos, correo, ...profileData } = formData;
-  
-      const profileResponse = await fetch('http://localhost:8000/api/user/profile/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(profileData)
-      });
-  
-      if (!profileResponse.ok) {
-        console.error('Error al actualizar el perfil');
-        return;
-      }
-      await createAdoptionRequest(); 
-    } catch (error) {
-      console.error('Error durante el envío del formulario:', error);
-    }
+    await saveAdoptionRequest();
   };
+
+  useEffect(() => {
+    if (error || success) {
+      const timer = setTimeout(() => {
+        setError(null);
+        setSuccess(null);
+        if (success){
+          navigate(`/user/my-adoption-requests/`);
+        }
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [error, success, navigate]);
 
   if (!pet){
     return null;
@@ -187,7 +174,7 @@ function AdoptionForm() {
           </div>
         </div>
         <div className="col-lg-8 col-md-12 shadow rounded border-left">
-          <p className="mt-3 text-center fw-bold fs-2"> Solicitud de Adopción </p>
+          <p className="mt-3 text-center fw-bold fs-2"> { requestId ? "Modificar Solicitud" : "Solicitud de Adopción" } </p>
           <form onSubmit={handleSubmit} className="container custom-form mb-5">
           <p className="mt-3 fs-4 fw-bold">Información de contacto</p>
             <div className="col-12 mb-3">
@@ -297,6 +284,7 @@ function AdoptionForm() {
                     name="experienciaMascotas"
                     value="Sí"
                     onChange={handleChange}
+                    checked={formData.experienciaMascotas === 'Sí'}
                     required
                   />
                   <label className="form-check-label">Sí</label>
@@ -308,12 +296,14 @@ function AdoptionForm() {
                     name="experienciaMascotas"
                     value="No"
                     onChange={handleChange}
+                    checked={formData.experienciaMascotas === 'No'}
                     required
                   />
                   <label className="form-check-label">No</label>
                 </div>
               </div>
             </div>
+
             <div className="col-12 mb-3">
               <label className="form-label">¿Tiene otras mascotas en casa actualmente?</label>
               <div>
@@ -324,6 +314,7 @@ function AdoptionForm() {
                     name="otrasMascotas"
                     value="Sí, perros"
                     onChange={handleChange}
+                    checked={formData.otrasMascotas === 'Sí, perros'}
                     required
                   />
                   <label className="form-check-label">Sí, perros</label>
@@ -335,6 +326,7 @@ function AdoptionForm() {
                     name="otrasMascotas"
                     value="Sí, gatos"
                     onChange={handleChange}
+                    checked={formData.otrasMascotas === 'Sí, gatos'}
                     required
                   />
                   <label className="form-check-label">Sí, gatos</label>
@@ -346,6 +338,7 @@ function AdoptionForm() {
                     name="otrasMascotas"
                     value="Sí, otros animales"
                     onChange={handleChange}
+                    checked={formData.otrasMascotas === 'Sí, otros animales'}
                     required
                   />
                   <label className="form-check-label">Sí, otros animales</label>
@@ -357,12 +350,14 @@ function AdoptionForm() {
                     name="otrasMascotas"
                     value="No"
                     onChange={handleChange}
+                    checked={formData.otrasMascotas === 'No'}
                     required
                   />
                   <label className="form-check-label">No</label>
                 </div>
               </div>
             </div>
+
             <div className="col-12 mb-3">
               <label className="form-label">¿Tiene espacio adecuado en casa para una mascota?</label>
               <div>
@@ -373,6 +368,7 @@ function AdoptionForm() {
                     name="espacioAdecuado"
                     value="Sí"
                     onChange={handleChange}
+                    checked={formData.espacioAdecuado === 'Sí'}
                     required
                   />
                   <label className="form-check-label">Sí</label>
@@ -384,12 +380,14 @@ function AdoptionForm() {
                     name="espacioAdecuado"
                     value="No"
                     onChange={handleChange}
+                    checked={formData.espacioAdecuado === 'No'}
                     required
                   />
                   <label className="form-check-label">No</label>
                 </div>
               </div>
             </div>
+
             <div className="col-12 mb-3">
               <label className="form-label">¿Quién será el responsable principal del cuidado de la mascota?</label>
               <div>
@@ -400,6 +398,7 @@ function AdoptionForm() {
                     name="responsableCuidado"
                     value="Yo"
                     onChange={handleChange}
+                    checked={formData.responsableCuidado === 'Yo'}
                     required
                   />
                   <label className="form-check-label">Yo</label>
@@ -411,6 +410,7 @@ function AdoptionForm() {
                     name="responsableCuidado"
                     value="Mi pareja"
                     onChange={handleChange}
+                    checked={formData.responsableCuidado === 'Mi pareja'}
                     required
                   />
                   <label className="form-check-label">Mi pareja</label>
@@ -422,6 +422,7 @@ function AdoptionForm() {
                     name="responsableCuidado"
                     value="Mis hijos"
                     onChange={handleChange}
+                    checked={formData.responsableCuidado === 'Mis hijos'}
                     required
                   />
                   <label className="form-check-label">Mis hijos</label>
@@ -433,12 +434,14 @@ function AdoptionForm() {
                     name="responsableCuidado"
                     value="Otra persona"
                     onChange={handleChange}
+                    checked={formData.responsableCuidado === 'Otra persona'}
                     required
                   />
                   <label className="form-check-label">Otra persona</label>
                 </div>
               </div>
             </div>
+
             <div className="col-12 mb-3">
               <label className="form-label">¿Cuántas horas al día estará sola la mascota?</label>
               <div>
@@ -449,6 +452,7 @@ function AdoptionForm() {
                     name="horasSolas"
                     value="Menos de 4 horas"
                     onChange={handleChange}
+                    checked={formData.horasSolas === 'Menos de 4 horas'}
                     required
                   />
                   <label className="form-check-label">Menos de 4 horas</label>
@@ -460,6 +464,7 @@ function AdoptionForm() {
                     name="horasSolas"
                     value="Entre 4 y 8 horas"
                     onChange={handleChange}
+                    checked={formData.horasSolas === 'Entre 4 y 8 horas'}
                     required
                   />
                   <label className="form-check-label">Entre 4 y 8 horas</label>
@@ -471,12 +476,14 @@ function AdoptionForm() {
                     name="horasSolas"
                     value="Más de 8 horas"
                     onChange={handleChange}
+                    checked={formData.horasSolas === 'Más de 8 horas'}
                     required
                   />
                   <label className="form-check-label">Más de 8 horas</label>
                 </div>
               </div>
             </div>
+
             <div className="col-12 mb-3">
               <label className="form-label">¿Tiene experiencia con esta raza o tipo de mascota?</label>
               <div>
@@ -487,6 +494,7 @@ function AdoptionForm() {
                     name="experienciaEspecifica"
                     value="Sí"
                     onChange={handleChange}
+                    checked={formData.experienciaEspecifica === 'Sí'}
                     required
                   />
                   <label className="form-check-label">Sí</label>
@@ -498,12 +506,14 @@ function AdoptionForm() {
                     name="experienciaEspecifica"
                     value="No"
                     onChange={handleChange}
+                    checked={formData.experienciaEspecifica === 'No'}
                     required
                   />
                   <label className="form-check-label">No</label>
                 </div>
               </div>
             </div>
+
             <div className="col-12 mb-3">
               <label className="form-label">¿Está dispuesto a cubrir los gastos de atención veterinaria y alimentación?</label>
               <div>
@@ -514,6 +524,7 @@ function AdoptionForm() {
                     name="dispuestoGastos"
                     value="Sí"
                     onChange={handleChange}
+                    checked={formData.dispuestoGastos === 'Sí'}
                     required
                   />
                   <label className="form-check-label">Sí</label>
@@ -525,6 +536,7 @@ function AdoptionForm() {
                     name="dispuestoGastos"
                     value="No"
                     onChange={handleChange}
+                    checked={formData.dispuestoGastos === 'No'}
                     required
                   />
                   <label className="form-check-label">No</label>
@@ -543,7 +555,9 @@ function AdoptionForm() {
               />
             </div>
             <div className="d-grid">
-              <button type="submit" className="btn btn-primary">Enviar solicitud</button>
+              <button type="submit" className="btn btn-primary mt-3">
+              {requestId ? 'Actualizar Solicitud' : 'Enviar Solicitud'}
+            </button>
             </div>
             {error && <div className="alert alert-danger mt-3" role="alert">{error}</div>}
             {success && <div className="alert alert-success mt-3" role="alert">{success}</div>}

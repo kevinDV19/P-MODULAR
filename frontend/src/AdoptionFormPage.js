@@ -2,7 +2,7 @@ import Footer from './componentes/Footer'
 import Header from './componentes/Header'
 import AdoptionForm from './componentes/AdoptionForm';
   
-function Main() {
+function AdoptionFormPage() {
     return (
       <div className="d-flex flex-column min-vh-100">
         <div className="flex-fill">
@@ -14,4 +14,4 @@ function Main() {
     );
   }
     
-  export default Main;
+  export default AdoptionFormPage;

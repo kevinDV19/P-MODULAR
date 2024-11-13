@@ -24,6 +24,7 @@ class UserProfile(models.Model):
     codigo_postal = models.CharField(max_length=10, blank=True, null=True)
     municipio = models.CharField(max_length=100, blank=True, null=True)
     telefono_celular = models.CharField(max_length=15, blank=True, null=True)
+    foto_perfil = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.user.username
@@ -49,8 +50,9 @@ class AdoptionRequest(models.Model):
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE)  
-    pet = models.ForeignKey('Pet', on_delete=models.CASCADE)  
+    pet = models.ForeignKey('Pet', on_delete=models.CASCADE)
     pet_owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='adoption_requests')
+    pet_name = models.CharField(max_length=255, blank=True)  
     message = models.TextField(blank=True, null=True) 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDIENTE)
     date_submitted = models.DateTimeField(auto_now_add=True)
@@ -61,6 +63,7 @@ class AdoptionRequest(models.Model):
     
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255, blank=True)
     message = models.TextField()
     date_sent = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)

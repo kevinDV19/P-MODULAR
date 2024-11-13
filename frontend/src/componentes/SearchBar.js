@@ -29,33 +29,22 @@ function SearchBar({ setPets }) {
       
       try {
         const queryParams = new URLSearchParams(filters).toString();
-        const cachedResults = sessionStorage.getItem(queryParams);
-  
-        if (cachedResults) {
-          const parsedResults = JSON.parse(cachedResults);
-          setPets(parsedResults);
-  
-          if (parsedResults.length === 0) {
-            setNoResults(true);
-          } else {
-            setNoResults(false);
-          }
-        } else {
-          const response = await fetch('http://localhost:8000/api/search/?' + queryParams);
-          if (!response.ok) {
-            throw new Error('Error al cargar las mascotas.');
-          }
-          const data = await response.json();
-  
-          if (data.length === 0) {
-            setNoResults(true); 
-          } else {
-            setNoResults(false); 
-          }
-  
-          setPets(data);
-          sessionStorage.setItem(queryParams, JSON.stringify(data)); 
+    
+        const response = await fetch('http://localhost:8000/api/search/?' + queryParams);
+        if (!response.ok) {
+          throw new Error('Error al cargar las mascotas.');
         }
+        const data = await response.json();
+
+        if (data.length === 0) {
+          setNoResults(true); 
+        } else {
+          setNoResults(false); 
+        }
+
+        setPets(data);
+        sessionStorage.setItem(queryParams, JSON.stringify(data)); 
+        
       } catch (error) {
         setError(error.message);
       } finally {

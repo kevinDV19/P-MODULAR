@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -41,6 +42,7 @@ INSTALLED_APPS = [
     'api',
     'rest_framework',
     'rest_framework_simplejwt',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -81,10 +83,10 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'bzgcooqapeeqvhs2f3ap',
-        'USER': 'ubnhbnyaaxlivixu',
-        'PASSWORD': 'YMUZMAqt2xgarbrWJbN3',
-        'HOST': 'bzgcooqapeeqvhs2f3ap-mysql.services.clever-cloud.com',
+        'NAME': 'google-cloud-db',
+        'USER': 'root',
+        'PASSWORD': 'DUVAKEV19-.-',
+        'HOST': '34.46.210.252',
         'PORT': '3306',
     }
 }
@@ -143,3 +145,5 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
 }
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "C:/PModular/proyecto-modular-440018-9e9b528fa9b7.json"

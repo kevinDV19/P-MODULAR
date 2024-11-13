@@ -5,19 +5,26 @@ from django.contrib.auth.models import User
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.UserProfile
-        fields = ['ocupacion', 'colonia', 'codigo_postal', 'municipio', 'telefono_celular']
+        fields = ['ocupacion', 'colonia', 'codigo_postal', 'municipio', 'telefono_celular', 'foto_perfil', 'user']
 
 
 class AdoptionRequestSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.username', read_only=True)
+    user_photo = serializers.CharField(source='user.userprofile.foto_perfil', read_only=True)
+
     class Meta:
         model = models.AdoptionRequest
-        fields = ['id', 'user', 'pet', 'message', 'status', 'date_submitted', 'pet_owner','form_data']
-        read_only_fields = ['user', 'pet_owner'] 
+        fields = [
+            'id', 'user', 'user_name', 'user_photo', 'pet', 'pet_name', 
+            'message', 'status', 'date_submitted', 'pet_owner', 'form_data'
+        ]
+        read_only_fields = ['user', 'pet_owner', 'date_submitted']
+
 
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Notification
-        fields = ['id', 'message', 'date_sent', 'is_read']
+        fields = ['id', 'title', 'message', 'date_sent', 'is_read']
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -48,5 +55,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 class PetSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Pet
-        fields = ['owner', 'id', 'nombre', 'descripcion', 'imagen', 'size', 'sexo', 'ubicacion', 'edad']
+        fields = ['owner', 'id', 'nombre', 'descripcion', 'tipo', 'imagen', 'size', 'sexo', 'ubicacion', 'edad']
+
+
 

@@ -7,13 +7,17 @@ function PetList({ pets }) {
       <div className="row">
         {pets.map(pet => (
           <div className="col-md-4 mb-4" key={pet.id}>
-            <Card>
-              <Card.Img variant="top" src={pet.imagen} />
+            <Card className="shadow">
+              <Card.Img 
+                variant="top" 
+                src={pet.imagen} 
+                style={{ width: "100%", height: "280px", objectFit: "cover" }} 
+              />
               <Card.Body>
                 <Card.Title>{pet.nombre}</Card.Title>
                 <Card.Text>{pet.edad} ● {pet.sexo}</Card.Text>
                 <Card.Text>{pet.ubicacion}</Card.Text>
-                <Link to={`/pets/${pet.id}`} className="btn btn-primary">
+                <Link to={`/pet/${pet.id}`} className="btn btn-primary">
                   Ver detalles
                 </Link>
               </Card.Body>
